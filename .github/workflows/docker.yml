@@ -29,6 +29,7 @@ jobs:
             ghcr.io/aoepeople/opa_admission_controller
           tags: |
             type=semver,pattern={{version}}
+            type=edge,branch=main
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
