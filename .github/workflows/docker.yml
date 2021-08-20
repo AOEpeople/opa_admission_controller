@@ -18,7 +18,8 @@ jobs:
       fail-fast: false
 
   steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
 
     - name: Docker meta
       id: meta
