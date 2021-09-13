@@ -13,14 +13,18 @@ import (
 )
 
 func main() {
-	logger, _ := zap.NewProduction()
-	defer logger.Sync() // flushes buffer, if any
-	sugar := logger.Sugar()
-
 	port := flag.Int("port", 8443, "port")
 	noSSL := flag.Bool("no-ssl", false, "don't use ssl")
 	configFile := flag.String("config", "/config/config.yaml", "path to config file")
+	level := zap.LevelFlag("loglevel", zap.InfoLevel, "loglevel")
 	flag.Parse()
+
+	config := zap.NewProductionConfig()
+	config.Level = zap.NewAtomicLevelAt(*level)
+	logger, _ := config.Build([]zap.Option{}...)
+
+	defer logger.Sync() // flushes buffer, if any
+	sugar := logger.Sugar()
 
 	yamlFile, err := os.Open(*configFile)
 	defer yamlFile.Close()
@@ -33,7 +37,7 @@ func main() {
 	mutations := make([]internal.Mutation, 0)
 	err = yaml.Unmarshal(byteValue, &mutations)
 	if err != nil {
-		sugar.Fatalf("Error unmarshalling config yaml %s",err)
+		sugar.Fatalf("Error unmarshalling config yaml %s", err)
 	}
 
 	controller := internal.Controller{Sugar: sugar, Mutations: mutations}

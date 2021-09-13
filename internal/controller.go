@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/buger/jsonparser"
 	"go.uber.org/zap"
 	"io/ioutil"
 	v1 "k8s.io/api/admission/v1"
@@ -36,7 +37,27 @@ func (controller *Controller) HandleMutate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	patches, err := applyMutations(jsonMap, controller.Mutations)
+	kind, err := jsonparser.GetString(body, "request", "object", "kind")
+	if err != nil {
+		controller.replyInternalServerError(w, "Error retrieving kind", err)
+		return
+	}
+
+	namespace, err := jsonparser.GetString(body, "request", "object", "metadata", "namespace")
+	if err != nil {
+		controller.replyInternalServerError(w, "Error retrieving namespace", err)
+		return
+	}
+
+	name, err := jsonparser.GetString(body, "request", "object", "metadata", "name")
+	if err != nil {
+		controller.replyInternalServerError(w, "Error retrieving name", err)
+		return
+	}
+
+	controller.Sugar.Infof("got a mutation request for kind=%s, namespace=%s, name=%s", kind, namespace, name)
+
+	patches, err := controller.applyMutations(jsonMap, controller.Mutations)
 	if err != nil {
 		controller.replyInternalServerError(w, "Error applying mutations", err)
 		return
@@ -51,10 +72,10 @@ func (controller *Controller) HandleMutate(w http.ResponseWriter, r *http.Reques
 	patchType := v1.PatchTypeJSONPatch
 	//TODO Audit Annotations
 	admissionResponse := v1.AdmissionResponse{
-		UID:              admissionReview.Request.UID,
-		Allowed:          true,
-		PatchType:        &patchType,
-		Patch:            patchesJSON,
+		UID:       admissionReview.Request.UID,
+		Allowed:   true,
+		PatchType: &patchType,
+		Patch:     patchesJSON,
 	}
 
 	admissionReview.Response = &admissionResponse

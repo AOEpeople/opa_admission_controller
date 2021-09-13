@@ -16,28 +16,37 @@ type Mutation struct {
 
 var runtimeEnv = generateEnvAst()
 
-func applyMutations(input map[string]interface{}, mutations []Mutation) ([]map[string]interface{}, error) {
+func (controller *Controller) applyMutations(input map[string]interface{}, mutations []Mutation) ([]map[string]interface{}, error) {
 	patches := make([]map[string]interface{}, 0)
 
 	for _, mutation := range mutations {
-		filterDoesMatch, err := checkFilter(input, mutation.Filter)
+		filterDoesMatch, err := controller.checkFilter(input, mutation.Filter)
 		if err != nil {
 			return patches, err
 		}
 		if !filterDoesMatch {
 			continue
 		}
-		p, err := generatePatches(input, mutation.Mutation)
+		controller.Sugar.Infof("mutation with id=%d matches the request, starting to generate patches", mutation.Id)
+
+		generatedPatches, err := controller.generatePatches(input, mutation.Mutation)
 		if err != nil {
 			return patches, err
 		}
-		patches = append(patches, p...)
+		controller.Sugar.Infof("generated %d patches for mutation with id=%d", len(generatedPatches), mutation.Id)
+
+		for i, p := range generatedPatches {
+			controller.Sugar.Debugf("patch %d => %v", i, p)
+		}
+
+		patches = append(patches, generatedPatches...)
 	}
 
+	controller.Sugar.Infof("generated %d patches in total", len(patches))
 	return patches, nil
 }
 
-func generatePatches(input map[string]interface{}, module string) ([]map[string]interface{}, error) {
+func (controller *Controller) generatePatches(input map[string]interface{}, module string) ([]map[string]interface{}, error) {
 	ret := make([]map[string]interface{}, 0)
 
 	ctx := context.Background()
@@ -63,7 +72,7 @@ func generatePatches(input map[string]interface{}, module string) ([]map[string]
 	return ret, nil
 }
 
-func checkFilter(input map[string]interface{}, module string) (bool, error) {
+func (controller *Controller) checkFilter(input map[string]interface{}, module string) (bool, error) {
 	ctx := context.Background()
 	query, err := rego.New(
 		rego.Module("example.rego", module),
