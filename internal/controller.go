@@ -41,21 +41,18 @@ func (controller *Controller) HandleMutate(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		kind = "unknown"
 		controller.Sugar.Warnf("Error retrieving kind")
-		return
 	}
 
 	namespace, err := jsonparser.GetString(body, "request", "object", "metadata", "namespace")
 	if err != nil {
 		namespace = "unknown"
 		controller.Sugar.Warnf("Error retrieving namespace")
-		return
 	}
 
 	name, err := jsonparser.GetString(body, "request", "object", "metadata", "name")
 	if err != nil {
 		name = "unknown"
 		controller.Sugar.Warnf("Error retrieving name")
-		return
 	}
 
 	controller.Sugar.Infof("got a mutation request for kind=%s, namespace=%s, name=%s", kind, namespace, name)
