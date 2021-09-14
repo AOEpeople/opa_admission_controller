@@ -39,19 +39,22 @@ func (controller *Controller) HandleMutate(w http.ResponseWriter, r *http.Reques
 
 	kind, err := jsonparser.GetString(body, "request", "object", "kind")
 	if err != nil {
-		controller.replyInternalServerError(w, "Error retrieving kind", err)
+		kind = "unknown"
+		controller.Sugar.Warnf("Error retrieving kind")
 		return
 	}
 
 	namespace, err := jsonparser.GetString(body, "request", "object", "metadata", "namespace")
 	if err != nil {
-		controller.replyInternalServerError(w, "Error retrieving namespace", err)
+		namespace = "unknown"
+		controller.Sugar.Warnf("Error retrieving namespace")
 		return
 	}
 
 	name, err := jsonparser.GetString(body, "request", "object", "metadata", "name")
 	if err != nil {
-		controller.replyInternalServerError(w, "Error retrieving name", err)
+		namespace = "name"
+		controller.Sugar.Warnf("Error retrieving name")
 		return
 	}
 
