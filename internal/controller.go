@@ -53,7 +53,7 @@ func (controller *Controller) HandleMutate(w http.ResponseWriter, r *http.Reques
 
 	name, err := jsonparser.GetString(body, "request", "object", "metadata", "name")
 	if err != nil {
-		namespace = "name"
+		name = "unknown"
 		controller.Sugar.Warnf("Error retrieving name")
 		return
 	}
